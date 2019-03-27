@@ -3,15 +3,20 @@ const app = express()
 const bodyParser = require('body-parser')
 const MongoClient = require('mongodb').MongoClient
 
-var db
+var db, collection;
 
-MongoClient.connect('mongodb://demo:demo@ds125146.mlab.com:25146/savage', (err, database) => {
-  if (err) return console.log(err)
-  db = database
-  app.listen(process.env.PORT || 3000, () => {
-    console.log('listening on 3000')
-  })
-})
+const url = "mongodb+srv://teykin:savage@cluster0-alrsd.mongodb.net/test?retryWrites=true";
+const dbName = "messages";
+
+app.listen(3000, () => {
+    MongoClient.connect(url, { useNewUrlParser: true }, (error, client) => {
+        if(error) {
+            throw error;
+        }
+        db = client.db(dbName);
+        console.log(`Connected to ${dbName}!`);
+    });
+});
 
 app.set('view engine', 'ejs')
 app.use(bodyParser.urlencoded({extended: true}))
@@ -19,6 +24,7 @@ app.use(bodyParser.json())
 app.use(express.static('public'))
 
 app.get('/', (req, res) => {
+  //console.log(db)
   db.collection('messages').find().toArray((err, result) => {
     if (err) return console.log(err)
     res.render('index.ejs', {messages: result})
@@ -33,11 +39,26 @@ app.post('/messages', (req, res) => {
   })
 })
 
-app.put('/messages', (req, res) => {
+app.put('/thumbUp', (req, res) => {
   db.collection('messages')
   .findOneAndUpdate({name: req.body.name, msg: req.body.msg}, {
     $set: {
       thumbUp:req.body.thumbUp + 1
+    }
+  }, {
+    sort: {_id: -1},
+    upsert: true
+  }, (err, result) => {
+    if (err) return res.send(err)
+    res.send(result)
+  })
+})
+
+app.put('/thumbDown', (req, res) => {
+  db.collection('messages')
+  .findOneAndUpdate({name: req.body.name, msg: req.body.msg}, {
+    $set: {
+      thumbDown:req.body.thumbDown + 1
     }
   }, {
     sort: {_id: -1},
