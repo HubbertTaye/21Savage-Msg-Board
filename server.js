@@ -5,8 +5,8 @@ const MongoClient = require('mongodb').MongoClient
 
 var db, collection;
 
-const url = "mongodb+srv://demo:demo@cluster0-q2ojb.mongodb.net/test?retryWrites=true";
-const dbName = "demo";
+const url = "mongodb+srv://teykin:savage@cluster0-alrsd.mongodb.net/test?retryWrites=true";
+const dbName = "messages";
 
 app.listen(3000, () => {
     MongoClient.connect(url, { useNewUrlParser: true }, (error, client) => {
@@ -14,7 +14,7 @@ app.listen(3000, () => {
             throw error;
         }
         db = client.db(dbName);
-        console.log("Connected to `" + dbName + "`!");
+        console.log(`Connected to ${dbName}!`);
     });
 });
 
@@ -39,11 +39,26 @@ app.post('/messages', (req, res) => {
   })
 })
 
-app.put('/messages', (req, res) => {
+app.put('/thumbUp', (req, res) => {
   db.collection('messages')
   .findOneAndUpdate({name: req.body.name, msg: req.body.msg}, {
     $set: {
       thumbUp:req.body.thumbUp + 1
+    }
+  }, {
+    sort: {_id: -1},
+    upsert: true
+  }, (err, result) => {
+    if (err) return res.send(err)
+    res.send(result)
+  })
+})
+
+app.put('/thumbDown', (req, res) => {
+  db.collection('messages')
+  .findOneAndUpdate({name: req.body.name, msg: req.body.msg}, {
+    $set: {
+      thumbDown:req.body.thumbDown + 1
     }
   }, {
     sort: {_id: -1},
